@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('Draw!');
                 } else {
                     currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    if (currentPlayer === 'O') {
+                        computerMove();
+                    }
                 }
             }
         });
@@ -38,6 +41,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return winPatterns.some(pattern => {
             return pattern.every(index => board[index] === currentPlayer);
         });
+    }
+
+    function computerMove() {
+        for (let i = 0; i < board.length; i++) {
+            if (board[i] === '') {
+                board[i] = currentPlayer;
+                cells[i].textContent = currentPlayer;
+                if (checkWinner()) {
+                    alert(currentPlayer + ' wins!');
+                } else if (board.every(cell => cell !== '')) {
+                    alert('Draw!');
+                } else {
+                    currentPlayer = 'X';
+                }
+                break;
+            }
+        }
     }
 
     function resetGame() {
