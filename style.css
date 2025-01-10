@@ -12,6 +12,18 @@ body {
     text-align: center;
 }
 
+.status {
+    font-size: 24px;
+    margin-bottom: 20px;
+    padding: 10px;
+    color: #00796b;
+    font-weight: bold;
+    min-height: 36px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .board {
     display: grid;
     grid-template-columns: repeat(3, 100px);
@@ -39,6 +51,14 @@ body {
     background-color: #b2dfdb;
 }
 
+.cell[data-value="X"] {
+    color: #00796b;
+}
+
+.cell[data-value="O"] {
+    color: #ef5350;
+}
+
 button {
     padding: 10px 20px;
     font-size: 16px;
@@ -53,4 +73,21 @@ button {
 
 button:hover {
     background-color: #004d40;
+}
+
+@media (max-width: 400px) {
+    .board {
+        grid-template-columns: repeat(3, 80px);
+        grid-template-rows: repeat(3, 80px);
+    }
+    
+    .cell {
+        width: 80px;
+        height: 80px;
+        font-size: 20px;
+    }
+    
+    .status {
+        font-size: 20px;
+    }
 }

@@ -1,68 +1,68 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const socket = io('http://localhost:3001', {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
+    });
     const cells = document.querySelectorAll('.cell');
     const resetButton = document.getElementById('reset');
-    let currentPlayer = 'X';
-    let board = ['', '', '', '', '', '', '', '', ''];
+    const statusDisplay = document.getElementById('status');
 
+    // Connection status handling
+    socket.on('connect', () => {
+        console.log('Connected to server');
+        statusDisplay.textContent = 'Connected to game server';
+    });
+
+    socket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+        statusDisplay.textContent = 'Connection error. Trying to reconnect...';
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Disconnected from server');
+        statusDisplay.textContent = 'Disconnected from server. Trying to reconnect...';
+    });
+
+    // Handle cell clicks
     cells.forEach(cell => {
         cell.addEventListener('click', () => {
-            const index = cell.getAttribute('data-index');
-            if (board[index] === '' && !checkWinner()) {
-                board[index] = currentPlayer;
-                cell.textContent = currentPlayer;
-                if (checkWinner()) {
-                    alert(currentPlayer + ' wins!');
-                } else if (board.every(cell => cell !== '')) {
-                    alert('Draw!');
-                } else {
-                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-                    if (currentPlayer === 'O') {
-                        computerMove();
-                    }
-                }
+            if (socket.connected) {
+                const index = parseInt(cell.getAttribute('data-index'));
+                socket.emit('makeMove', index);
             }
         });
     });
 
-    resetButton.addEventListener('click', resetGame);
-
-    function checkWinner() {
-        const winPatterns = [
-            [0, 1, 2],
-            [3, 4, 5],
-            [6, 7, 8],
-            [0, 3, 6],
-            [1, 4, 7],
-            [2, 5, 8],
-            [0, 4, 8],
-            [2, 4, 6]
-        ];
-
-        return winPatterns.some(pattern => {
-            return pattern.every(index => board[index] === currentPlayer);
-        });
-    }
-
-    function computerMove() {
-        for (let i = 0; i < board.length; i++) {
-            if (board[i] === '') {
-                board[i] = currentPlayer;
-                cells[i].textContent = currentPlayer;
-                if (checkWinner()) {
-                    alert(currentPlayer + ' wins!');
-                } else if (board.every(cell => cell !== '')) {
-                    alert('Draw!');
-                } else {
-                    currentPlayer = 'X';
-                }
-                break;
-            }
+    // Handle reset button click
+    resetButton.addEventListener('click', () => {
+        if (socket.connected) {
+            socket.emit('reset');
         }
-    }
+    });
 
-    function resetGame() {
-        board = ['', '', '', '', '', '', '', '', ''];
-        cells.forEach(cell => cell.textContent = '');
-        currentPlayer = 'X';
-    }
+    // Handle game state updates from server
+    socket.on('gameState', (gameState) => {
+        // Update board
+        gameState.board.forEach((value, index) => {
+            cells[index].textContent = value;
+            cells[index].setAttribute('data-value', value);
+        });
+
+        // Update status message
+        if (gameState.isOver) {
+            if (gameState.winner) {
+                statusDisplay.textContent = `Player ${gameState.winner} wins!`;
+            } else if (gameState.isDraw) {
+                statusDisplay.textContent = "It's a draw!";
+            }
+        } else {
+            statusDisplay.textContent = `Current player: ${gameState.currentPlayer}`;
+        }
+
+        // Disable/enable cells based on game state
+        cells.forEach((cell, index) => {
+            cell.style.cursor = gameState.isOver || gameState.board[index] !== '' ? 'not-allowed' : 'pointer';
+        });
+    });
 });
